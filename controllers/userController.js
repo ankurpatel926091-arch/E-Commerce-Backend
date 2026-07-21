@@ -6,17 +6,45 @@ const sendEmail = require('../utils/sendEmail')
 const optStore = require('../utils/otpStore')
 
 exports.registerUser = async (req, res) => {
-    const { name, email, password, role } = req.body
+    const { name, email, password } = req.body;
+
     try {
-        const hashPassword = await bcrypt.hash(password, 10)
-        const user = new User({ name, email, password: hashPassword, role })
-        await user.save()
-        res.status(201).json({ message: 'User Created!' })
+
+        // Check if email already exists
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email already registered"
+            });
+        }
+
+        // Hash password
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        // Create new customer
+        const user = new User({
+            name,
+            email,
+            password: hashPassword,
+            role: "customer"
+        });
+
+        await user.save();
+
+        res.status(201).json({
+            message: "User Created Successfully"
+        });
+
     } catch (error) {
-        console.error('Register error:', error)
-        return res.status(500).json({ message: 'Error creating user!' })
+
+        console.error("Register error:", error);
+
+        res.status(500).json({
+            message: "Error creating user"
+        });
     }
-}
+};
 
 exports.loginUser = async (req, res) => {
     try {
